@@ -2,14 +2,13 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient, Prisma } from 'generated/prisma';
-import { SignupDto } from 'src/common/dto/signup.dto';
-import * as bcrypt from 'bcrypt';
-import { LoginDto } from 'src/common/dto/login.dto';
 import { DatabaseService } from 'src/database/database.service';
+import { SignupDto } from 'src/common/dto/signup.dto';
+import { LoginDto } from 'src/common/dto/login.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -51,13 +50,13 @@ export class AuthService {
       return {
         message: 'User created successfully',
         access_token: token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
       };
     } catch (error) {
-      // if (error instanceof this.database.databaseClientKnownRequestError) {
-      //   if (error.code === 'P2002') {
-      //     throw new BadRequestException('Email already exists');
-      //   }
-      // }
       throw new InternalServerErrorException('Could not create user');
     }
   }
@@ -66,7 +65,15 @@ export class AuthService {
     const { email, password } = dto;
 
     try {
-      const user = await this.database.user.findUnique({ where: { email } });
+      const user = await this.database.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          password: true,
+        },
+      });
 
       if (!user) {
         return { message: 'Login failed: wrong email or password' };
@@ -88,6 +95,11 @@ export class AuthService {
       return {
         message: 'Logged in successfully',
         access_token: token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
       };
     } catch (error) {
       console.error('Login error:', error);

@@ -8,9 +8,10 @@ import { ChatModule } from './chat/chat.module';
 import { TherapistChatModule } from './therapist-chat/therapist-chat.module';
 import { ResourceModule } from './resource/resource.module';
 import { SavedResourceModule } from './saved-resource/saved-resource.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
-  imports: [AuthModule, UserModule, MoodModule, ChatModule, TherapistChatModule, ResourceModule, SavedResourceModule],
+  imports: [AuthModule, UserModule, MoodModule, ChatModule, TherapistChatModule, ResourceModule, SavedResourceModule, DatabaseModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -6,13 +6,15 @@ import { UserModule } from './user/user.module';
 import { MoodModule } from './mood/mood.module';
 import { ChatModule } from './chat/chat.module';
 import { TherapistChatModule } from './therapist-chat/therapist-chat.module';
-import { ResourceModule } from './resource/resource.module';
+import { ResourcesModule } from './resources/resources.module';
 import { SavedResourceModule } from './saved-resource/saved-resource.module';
 import { DatabaseModule } from './database/database.module';
+import { ResourcesController } from './resources/resources.controller';
+import { ResourcesService } from './resources/resources.service';
 
 @Module({
-  imports: [AuthModule, UserModule, MoodModule, ChatModule, TherapistChatModule, ResourceModule, SavedResourceModule, DatabaseModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [AuthModule, UserModule, MoodModule, ChatModule, TherapistChatModule, ResourcesModule, SavedResourceModule, DatabaseModule, ResourcesModule],
+  controllers: [AppController, ResourcesController],
+  providers: [AppService,  ResourcesService],
 })
 export class AppModule {}

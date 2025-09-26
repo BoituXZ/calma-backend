@@ -108,39 +108,42 @@ export class AuthService {
     }
   }
 
-// Add this new method for token verification with debug logging
-async verifyToken(token: string) {
-  try {
-    console.log('Verifying token...');
-    
-    // Verify and decode the JWT token
-    const decoded = await this.jwtService.verifyAsync(token);
-    console.log('Token decoded successfully:', { sub: decoded.sub, email: decoded.email });
-    
-    // Get user from database using the user ID from token
-    const user = await this.database.user.findUnique({
-      where: { id: decoded.sub },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        // Don't select password for security
-      },
-    });
+  // Add this new method for token verification with debug logging
+  async verifyToken(token: string) {
+    try {
+      console.log('Verifying token...');
 
-    console.log('Database query result:', !!user);
-    
-    if (!user) {
-      console.log('User not found in database for ID:', decoded.sub);
+      // Verify and decode the JWT token
+      const decoded = await this.jwtService.verifyAsync(token);
+      console.log('Token decoded successfully:', {
+        sub: decoded.sub,
+        email: decoded.email,
+      });
+
+      // Get user from database using the user ID from token
+      const user = await this.database.user.findUnique({
+        where: { id: decoded.sub },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          // Don't select password for security
+        },
+      });
+
+      console.log('Database query result:', !!user);
+
+      if (!user) {
+        console.log('User not found in database for ID:', decoded.sub);
+        return null;
+      }
+
+      console.log('User verification successful');
+      return user;
+    } catch (error) {
+      console.error('Token verification failed:', error.message);
+      // Token is invalid or expired
       return null;
     }
-
-    console.log('User verification successful');
-    return user;
-  } catch (error) {
-    console.error('Token verification failed:', error.message);
-    // Token is invalid or expired
-    return null;
   }
-}
 }

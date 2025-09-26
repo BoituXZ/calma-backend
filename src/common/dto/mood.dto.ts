@@ -1,10 +1,9 @@
-import { IsNumber, IsString, isString } from "class-validator";
-
+import { IsNumber, IsString, isString } from 'class-validator';
 
 export class MoodDto {
-    @IsString()
-    id: string
+  @IsString()
+  id: string;
 
-    @IsNumber({}, {message: "Should be a number"})
-    mood: number;
+  @IsNumber({}, { message: 'Should be a number' })
+  mood: number;
 }

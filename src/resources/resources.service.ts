@@ -5,15 +5,11 @@ import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class ResourcesService {
- constructor(
-    private database:DatabaseService
- ){}
+  constructor(private database: DatabaseService) {}
 
+  async getAllResources() {
+    const resources = this.database.resource.findMany();
 
-    async getAllResources(){
-        const resources = this.database.resource.findMany()
-
-        return resources
-    }
-
+    return resources;
+  }
 }

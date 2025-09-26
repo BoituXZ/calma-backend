@@ -5,13 +5,10 @@ import { ResourcesService } from './resources.service';
 
 @Controller('resources')
 export class ResourcesController {
+  constructor(private resourcesService: ResourcesService) {}
 
-constructor(
-    private resourcesService: ResourcesService
-){}
-
-@Get('/:userid')
-async getResources(@Query() userId:UserDto){
-    const response = await this.resourcesService.getAllResources()
-}
+  @Get('/:userid')
+  async getResources(@Query() userId: UserDto) {
+    const response = await this.resourcesService.getAllResources();
+  }
 }

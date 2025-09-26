@@ -4,6 +4,6 @@ import { SavedResourceController } from './saved-resource.controller';
 
 @Module({
   providers: [SavedResourceService],
-  controllers: [SavedResourceController]
+  controllers: [SavedResourceController],
 })
 export class SavedResourceModule {}

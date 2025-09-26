@@ -9,12 +9,23 @@ import { TherapistChatModule } from './therapist-chat/therapist-chat.module';
 import { ResourcesModule } from './resources/resources.module';
 import { SavedResourceModule } from './saved-resource/saved-resource.module';
 import { DatabaseModule } from './database/database.module';
+import { CulturalProfileModule } from './cultural-profile/cultural-profile.module';
 import { ResourcesController } from './resources/resources.controller';
 import { ResourcesService } from './resources/resources.service';
 
 @Module({
-  imports: [AuthModule, UserModule, MoodModule, ChatModule, TherapistChatModule, ResourcesModule, SavedResourceModule, DatabaseModule, ResourcesModule],
+  imports: [
+    AuthModule,
+    UserModule,
+    MoodModule,
+    ChatModule,
+    TherapistChatModule,
+    ResourcesModule,
+    SavedResourceModule,
+    DatabaseModule,
+    CulturalProfileModule,
+  ],
   controllers: [AppController, ResourcesController],
-  providers: [AppService,  ResourcesService],
+  providers: [AppService, ResourcesService],
 })
 export class AppModule {}

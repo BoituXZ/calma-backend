@@ -14,7 +14,7 @@ async function bootstrap() {
     'http://localhost:5173',  // Alternative Vite port
     'http://localhost:3001',  // Common React port
   ];
-
+app.setGlobalPrefix('api')
   // Enable CORS with cookie support
   app.enableCors({
     origin: allowedOrigins,

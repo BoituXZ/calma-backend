@@ -1,0 +1,91 @@
+{
+  "model_info": {
+    "name": "Calma Chatbot",
+    "base_model": "meta-llama/Llama-3.2-3B-Instruct",
+    "fine_tuned_path": "models/calma-final",
+    "device": "CPU",
+    "evaluation_date": "2025"
+  },
+  "summary": {
+    "total_scenarios": 5,
+    "successful_responses": 5,
+    "success_rate": 1.0,
+    "average_empathy_score": 2.2,
+    "average_cultural_score": 1.0,
+    "average_helpfulness_score": 3.8,
+    "average_total_score": 7.0,
+    "average_response_length": 97.8
+  },
+  "detailed_results": [
+    {
+      "scenario_id": 1,
+      "category": "Academic Stress",
+      "prompt": "I'm feeling overwhelmed with my university studies and the pressure is getting to me",
+      "response": ". It's normal to feel stressed, but it's also important to take care of your well-being.\n\nRecognize that you are not alone in this struggle. Many students face similar challenges. Talking openly with friends, family, or a trusted adult about how you're feeling can help. This support network can provide emotional relief, practical advice, and reassurance.\n\nHere are some strategies that might help:\n\n*   **Break tasks into smaller steps**: Divide large assignments or study sessions into manageable chunks.\n*   **Create a schedule**: Plan dedicated time for studying, relaxation, and self-care.\n*",
+      "scores": {
+        "word_count": 91,
+        "empathy_score": 2,
+        "cultural_score": 2,
+        "action_score": 5,
+        "total_score": 9,
+        "length_ok": true
+      }
+    },
+    {
+      "scenario_id": 2,
+      "category": "Family Pressure",
+      "prompt": "My family expects me to support them financially but I'm still a student struggling myself",
+      "response": ". It can be hard to explain this situation without appearing lazy or irresponsible.\n\n## Step 1: Acknowledge the pressure and responsibility\nIt's natural for family members to expect financial contributions from their children, especially when they are in higher education. At the same time, it's essential to recognize that being a student comes with its own set of challenges, including limited income.\n\n## Step 2: Choose the right approach\nWhen explaining the situation to your family, consider using \"I\" statements instead of \"we.\" For example, \"I’m really focused on my studies right now\" rather than",
+      "scores": {
+        "word_count": 96,
+        "empathy_score": 2,
+        "cultural_score": 1,
+        "action_score": 1,
+        "total_score": 4,
+        "length_ok": true
+      }
+    },
+    {
+      "scenario_id": 3,
+      "category": "Career Anxiety",
+      "prompt": "I'm worried about finding a job after graduation and I feel anxious about my future",
+      "response": ".\nIt's normal to feel uncertain about your career path, especially when graduating into a competitive job market. Many students face similar anxieties.\n\nYou can try exploring different career options, networking with professionals in your field, practicing interview skills, or seeking advice from career counselors. Sometimes reflecting on your interests, values, and skills helps you narrow down what might be a good fit for you.\n\nRemember, it’s okay to take time figuring out your next steps. Focusing on personal growth, learning new skills, and building connections can increase your confidence and opportunities. You don’t have to have everything planned out",
+      "scores": {
+        "word_count": 100,
+        "empathy_score": 1,
+        "cultural_score": 1,
+        "action_score": 5,
+        "total_score": 7,
+        "length_ok": true
+      }
+    },
+    {
+      "scenario_id": 4,
+      "category": "Social Isolation",
+      "prompt": "I feel lonely and isolated, I don't have many close friends to talk to",
+      "response": ".\nThat's a very painful and valid feeling. It can be especially hard when you're used to having a supportive network of people in your life.\n\nFirstly, please know that loneliness is not something you are inherently broken or flawed. It's a common experience that many people face at some point in their lives.\n\nWould you like to talk about what it's like for you? Sometimes sharing your feelings with someone who cares can help you feel heard and understood. We could explore ways to connect with others or find small comforts during this time.\n\nYou might also consider reaching out to:\n\n*   **Friends",
+      "scores": {
+        "word_count": 104,
+        "empathy_score": 4,
+        "cultural_score": 1,
+        "action_score": 5,
+        "total_score": 10,
+        "length_ok": true
+      }
+    },
+    {
+      "scenario_id": 5,
+      "category": "Sleep & Anxiety",
+      "prompt": "I can't sleep properly because I keep worrying about everything in my life",
+      "response": ". Worrying is a natural part of life, but it can also interfere with your sleep if you let it consume you.\nHere are some tips to help you relax and fall asleep despite worry:\n\n*   **Keep a journal**: Writing down what's stressing you out can help you process your feelings and clear your mind before bed.\n*   **Practice relaxation techniques**: Try deep breathing exercises, progressive muscle relaxation, or meditation to calm yourself down.\n*   **Limit screen time before bed**: The blue light from smartphones, tablets, and computers can suppress melatonin production and make it harder to fall",
+      "scores": {
+        "word_count": 98,
+        "empathy_score": 2,
+        "cultural_score": 0,
+        "action_score": 3,
+        "total_score": 5,
+        "length_ok": true
+      }
+    }
+  ]
+}

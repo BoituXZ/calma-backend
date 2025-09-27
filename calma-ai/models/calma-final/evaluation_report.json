@@ -1,0 +1,70 @@
+{
+  "model_info": {
+    "base_model": "meta-llama/Llama-3.2-3B-Instruct",
+    "fine_tuned_path": "models/calma-final",
+    "device": "cuda"
+  },
+  "model_performance": {
+    "perplexity": Infinity,
+    "average_cultural_relevance": 0.0,
+    "average_empathy_score": 0.0
+  },
+  "sample_responses": [
+    {
+      "prompt": "I feel overwhelmed with university studies and don't know how to cope.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    },
+    {
+      "prompt": "My family doesn't understand my career choices and it's causing stress.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    },
+    {
+      "prompt": "I'm dealing with anxiety about my future and feel lost.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    },
+    {
+      "prompt": "I have trouble sleeping due to worrying about exams.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    },
+    {
+      "prompt": "I feel isolated and don't have many friends at university.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    },
+    {
+      "prompt": "The pressure from my parents about grades is making me anxious.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    },
+    {
+      "prompt": "I'm struggling financially and it's affecting my mental health.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    },
+    {
+      "prompt": "I feel like I don't belong in my community anymore.",
+      "response": "Error: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)"
+    }
+  ],
+  "detailed_scores": {
+    "cultural_scores": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "empathy_scores": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "avg_cultural": 0.0,
+    "avg_empathy": 0.0
+  }
+}

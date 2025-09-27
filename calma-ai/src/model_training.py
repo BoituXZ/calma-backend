@@ -1,3 +1,4 @@
+import os
 import torch
 from transformers import (
     AutoModelForCausalLM,
@@ -5,188 +6,192 @@ from transformers import (
     TrainingArguments,
     Trainer,
     DataCollatorForLanguageModeling,
-    EarlyStoppingCallback
+    BitsAndBytesConfig
 )
-from peft.config import LoraConfig
-from peft.mapping import get_peft_model
-from peft.utils.other import prepare_model_for_kbit_training
-from datasets import load_from_disk, DatasetDict
-from typing import Union, Optional
-import wandb
-from datetime import datetime
+from datasets import load_from_disk
+from peft import LoraConfig, get_peft_model, TaskType, prepare_model_for_kbit_training
+import warnings
+warnings.filterwarnings("ignore")
 
-class CalmaModelTrainer:
-    """
-    Fine-tuning trainer for Calma psychological health chatbot.
-    Uses QLoRA for memory-efficient training on consumer hardware.
-    """
+class CalmaTrainer:
+    """Training class for Calma chatbot with LoRA fine-tuning."""
     
     def __init__(self, model_name: str = "meta-llama/Llama-3.2-3B-Instruct"):
         self.model_name = model_name
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using device: {self.device}")
         
-    def load_model_and_tokenizer(self):
-        """Load base model with quantization and tokenizer."""
-        print("Loading model and tokenizer...")
+        # Initialize tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         
-        # Quantization config for memory efficiency
-        from transformers import BitsAndBytesConfig
-        quantization_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_use_double_quant=True,
-        )
+        # CRITICAL: Set padding token
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
         
-        # Load model with quantization
-        model = AutoModelForCausalLM.from_pretrained(
-            self.model_name,
-            quantization_config=quantization_config,
-            device_map="auto",
-            torch_dtype=torch.float16,
-            trust_remote_code=True
-        )
+        self.tokenizer.padding_side = "left"
         
-        # Load tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-            tokenizer.pad_token_id = tokenizer.eos_token_id
-        
-        return model, tokenizer
+        # Quantization config for memory efficiency (only if CUDA available)
+        if torch.cuda.is_available():
+            self.bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.bfloat16
+            )
+        else:
+            self.bnb_config = None
     
-    def setup_lora(self, model):
-        """Setup LoRA configuration for parameter-efficient fine-tuning."""
-        print("Setting up LoRA...")
+    def setup_model(self):
+        """Load and prepare model for training."""
+        print("Loading model...")
         
-        # Prepare model for k-bit training
-        model = prepare_model_for_kbit_training(model)
+        if torch.cuda.is_available() and self.bnb_config:
+            # Load model with quantization for GPU
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                quantization_config=self.bnb_config,
+                device_map="auto",
+                trust_remote_code=True,
+                torch_dtype=torch.bfloat16
+            )
+            
+            # Prepare model for k-bit training
+            model = prepare_model_for_kbit_training(model)
+        else:
+            # Load model without quantization for CPU
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                device_map={"": self.device},
+                trust_remote_code=True,
+                torch_dtype=torch.float32
+            )
         
-        # LoRA configuration
-        lora_config = LoraConfig(
-            r=16,  # Rank of adaptation
-            lora_alpha=32,  # LoRA scaling parameter
-            target_modules=[
-                "q_proj", "k_proj", "v_proj", "o_proj",
-                "gate_proj", "up_proj", "down_proj"
-            ],
+        # Configure LoRA
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            r=16,  # Rank
+            lora_alpha=32,
             lora_dropout=0.1,
             bias="none",
-            task_type="CAUSAL_LM"
+            target_modules=["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+            inference_mode=False
         )
         
-        # Apply LoRA to model
-        model = get_peft_model(model, lora_config)
-        
-        # Print trainable parameters
-        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        total_params = sum(p.numel() for p in model.parameters())
-        print(f"Trainable parameters: {trainable_params:,}")
-        print(f"Total parameters: {total_params:,}")
-        print(f"Percentage of trainable parameters: {100 * trainable_params / total_params:.2f}%")
+        # Apply LoRA
+        model = get_peft_model(model, peft_config)
+        model.print_trainable_parameters()
         
         return model
     
-    def create_training_arguments(self, output_dir: str = "models/fine_tuned"):
-        """Create training arguments for the Trainer."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_name = f"calma_llama3.2_3b_{timestamp}"
+    def setup_data_collator(self):
+        """Create data collator for dynamic padding."""
+        return DataCollatorForLanguageModeling(
+            tokenizer=self.tokenizer,
+            mlm=False,  # Causal LM, not masked LM
+            pad_to_multiple_of=8 if torch.cuda.is_available() else None
+        )
+    
+    def setup_training_args(self, output_dir: str = "./models/calma-finetuned"):
+        """Configure training arguments."""
+        # Adjust settings based on device
+        if torch.cuda.is_available():
+            batch_size = 1
+            gradient_accumulation = 16
+            fp16 = False
+            bf16 = True
+            optim = "paged_adamw_8bit"
+        else:
+            batch_size = 1
+            gradient_accumulation = 4
+            fp16 = False
+            bf16 = False
+            optim = "adamw_torch"
         
         return TrainingArguments(
             output_dir=output_dir,
-            per_device_train_batch_size=2,  # Small batch size for 6GB VRAM
-            per_device_eval_batch_size=2,
-            gradient_accumulation_steps=8,  # Effective batch size = 2 * 8 = 16
+            overwrite_output_dir=True,
             num_train_epochs=3,
-            learning_rate=2e-4,
+            per_device_train_batch_size=batch_size,
+            per_device_eval_batch_size=batch_size,
+            gradient_accumulation_steps=gradient_accumulation,
+            gradient_checkpointing=True,
             warmup_steps=100,
+            learning_rate=2e-4,
+            fp16=fp16,
+            bf16=bf16,
             logging_steps=10,
+            eval_strategy="steps",
             eval_steps=50,
-            save_steps=100,
-            evaluation_strategy="steps",
             save_strategy="steps",
+            save_steps=100,
+            save_total_limit=2,
             load_best_model_at_end=True,
             metric_for_best_model="eval_loss",
             greater_is_better=False,
-            remove_unused_columns=False,
-            dataloader_pin_memory=False,
-            gradient_checkpointing=True,  # Save memory
-            fp16=True,  # Mixed precision training
-            optim="paged_adamw_8bit",  # Memory efficient optimizer
+            report_to="none",
+            push_to_hub=False,
+            optim=optim,
+            max_grad_norm=0.3,
+            weight_decay=0.001,
             lr_scheduler_type="cosine",
-            report_to=["wandb"],
-            run_name=run_name,
-            save_total_limit=2,  # Keep only 2 best checkpoints
+            group_by_length=True,
+            ddp_find_unused_parameters=False,
+            remove_unused_columns=False,
+            label_names=["labels"]
         )
     
     def train(self, dataset_path: str = "data/processed/tokenized_dataset"):
         """Main training function."""
-        print("Starting training...")
-        
-        # Initialize wandb (optional)
-        wandb.init(project="calma-chatbot", name="llama3.2-3b-finetuning")
-        
-        # Load model and tokenizer
-        model, tokenizer = self.load_model_and_tokenizer()
-        
-        # Setup LoRA
-        model = self.setup_lora(model)
-        
         # Load dataset
+        print(f"Loading dataset from {dataset_path}")
         dataset = load_from_disk(dataset_path)
-
-        # Prepare datasets
-        if isinstance(dataset, DatasetDict):
-            train_dataset = dataset["train"] if "train" in dataset else None
-            eval_dataset = dataset["test"] if "test" in dataset else dataset.get("validation", None)
-        else:
-            # For single dataset, assume it's training data
-            train_dataset = dataset
-            eval_dataset = None
-
-        if train_dataset is None:
-            raise ValueError("No training dataset found in the loaded dataset")
-
-        # Data collator
-        data_collator = DataCollatorForLanguageModeling(
-            tokenizer=tokenizer,
-            mlm=False,  # Not masked language modeling
-            pad_to_multiple_of=8  # For tensor cores efficiency
-        )
-
-        # Training arguments
-        training_args = self.create_training_arguments()
-
-        # Create trainer
+        
+        # Setup model
+        model = self.setup_model()
+        
+        # Setup data collator
+        data_collator = self.setup_data_collator()
+        
+        # Setup training arguments
+        training_args = self.setup_training_args()
+        
+        # Initialize trainer
         trainer = Trainer(
             model=model,
             args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            data_collator=data_collator,
-            callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
+            train_dataset=dataset["train"],
+            eval_dataset=dataset["test"],
+            tokenizer=self.tokenizer,
+            data_collator=data_collator
         )
         
-        # Train the model
-        print("Training started...")
+        # Start training
+        print("Starting training...")
         trainer.train()
         
-        # Save the final model
+        # Save final model
         print("Saving model...")
-        trainer.save_model()
-        tokenizer.save_pretrained(training_args.output_dir)
+        trainer.save_model("./models/calma-final")
+        self.tokenizer.save_pretrained("./models/calma-final")
         
-        # Save training metrics
-        metrics = trainer.state.log_history
-        with open(f"{training_args.output_dir}/training_metrics.json", "w") as f:
-            import json
-            json.dump(metrics, f, indent=2)
-        
-        print(f"Training completed! Model saved to {training_args.output_dir}")
+        print("Training completed!")
         
         return trainer
+    
+    def evaluate(self, trainer):
+        """Evaluate the trained model."""
+        eval_results = trainer.evaluate()
+        print(f"Evaluation results: {eval_results}")
+        return eval_results
 
-# Usage
+
 if __name__ == "__main__":
-    trainer = CalmaModelTrainer()
-    trainer.train()
+    # Create trainer
+    trainer = CalmaTrainer()
+    
+    # Train model
+    trained_model = trainer.train()
+    
+    # Evaluate
+    trainer.evaluate(trained_model)

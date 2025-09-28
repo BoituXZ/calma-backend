@@ -27,6 +27,20 @@ export class ChatResponseDto {
     timestamp: Date;
     emotionalTone?: string | null;
     detectedTopics?: string[];
+    analysisResults?: {
+      mood_detected?: string;
+      confidence?: number;
+      emotional_intensity?: number;
+      suggested_resources?: string[];
+      cultural_elements_detected?: string[];
+      quality_metrics?: {
+        word_count?: number;
+        sentence_count?: number;
+        cultural_awareness_score?: number;
+        empathy_score?: number;
+        response_length_category?: string;
+      };
+    };
   };
 
   session: {

@@ -4,9 +4,6 @@ export class ChatRequestDto {
   @IsString()
   message: string;
 
-  @IsUUID()
-  userId: string;
-
   @IsOptional()
   @IsUUID()
   sessionId?: string;

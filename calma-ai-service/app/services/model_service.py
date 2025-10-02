@@ -136,7 +136,7 @@ class ModelService:
             gpu_memory_gb = gpu_memory / (1024**3)
             logger.info(f"GPU available with {gpu_memory_gb:.1f} GB memory")
 
-            if gpu_memory_gb >= 6:  # Minimum for 3B model
+            if gpu_memory_gb >= 4:  # Minimum for 3B model with 4-bit quantization
                 return "cuda"
             else:
                 logger.warning("GPU memory insufficient, falling back to CPU")

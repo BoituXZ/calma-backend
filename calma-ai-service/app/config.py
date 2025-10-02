@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     }
 
     # Model settings
-    model_path: str = "models/calma-final"
+    model_path: str = "/home/boitu/Desktop/Coding/Calma/calma-backend/calma-ai/models/calma-final"
     base_model_name: str = "meta-llama/Llama-3.2-3B-Instruct"
 
     # Inference settings
@@ -25,9 +25,10 @@ class Settings(BaseSettings):
     do_sample: bool = True
 
     # Performance settings
-    max_memory_mb: int = 8192
-    device_map: str = "auto"
+    max_memory_mb: int = 5800  # RTX 4050 memory
+    device_map: str = "cuda:0"  # Force GPU usage
     torch_dtype: str = "float16"
+    use_4bit: bool = True  # Enable 4-bit quantization for GPU memory efficiency
 
     # API settings
     host: str = "0.0.0.0"
@@ -48,7 +49,7 @@ class Settings(BaseSettings):
     model_version: str = "calma-v1"
 
     # Timeout settings
-    inference_timeout: int = 30  # seconds
+    inference_timeout: int = 180  # seconds (increased for CPU inference)
     model_load_timeout: int = 120  # seconds
 
 

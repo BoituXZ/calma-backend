@@ -20,18 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 class ModelService:
-    """Handles dual model loading: casual (base) and therapeutic (fine-tuned)."""
+    """Handles loading the fine-tuned Calma model (single model system)."""
 
     def __init__(self):
-        # Casual model (base Llama for natural conversation)
-        self.casual_model = None
-        self.casual_pipeline = None
-
-        # Therapeutic model (fine-tuned with LoRA for mental health support)
-        self.therapeutic_model = None
-        self.therapeutic_pipeline = None
-
-        # Shared tokenizer (same for both models)
+        # Single fine-tuned model for all interactions
+        self.model = None
+        self.pipeline = None
         self.tokenizer = None
 
         self.device = None
@@ -40,9 +34,9 @@ class ModelService:
         self.model_info = {}
 
     async def load_model(self) -> bool:
-        """Load both casual (base) and therapeutic (fine-tuned) models."""
+        """Load the fine-tuned Calma model (single model system)."""
         try:
-            logger.info("Starting dual model loading process...")
+            logger.info("Loading fine-tuned Calma model (single model system)...")
             start_time = time.time()
 
             # Clear any existing models from memory
@@ -62,7 +56,7 @@ class ModelService:
                     bnb_4bit_quant_type="nf4"
                 )
 
-            # Load tokenizer (shared between both models)
+            # Load tokenizer
             logger.info("Loading tokenizer...")
             self.tokenizer = AutoTokenizer.from_pretrained(
                 settings.base_model_name,
@@ -83,59 +77,48 @@ class ModelService:
             if quantization_config:
                 model_kwargs["quantization_config"] = quantization_config
 
-            # Load CASUAL model (base Llama without LoRA)
-            logger.info("Loading casual conversation model (base Llama)...")
-            self.casual_model = AutoModelForCausalLM.from_pretrained(
-                settings.base_model_name,
-                **model_kwargs
-            )
-
-            if self.device == "cpu":
-                self.casual_model = self.casual_model.to(self.device)
-
-            # Create casual pipeline
-            self.casual_pipeline = pipeline(
-                "text-generation",
-                model=self.casual_model,
-                tokenizer=self.tokenizer,
-                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
-                device_map=settings.device_map if self.device != "cpu" else None,
-            )
-            logger.info("✓ Casual model loaded")
-
-            # Load THERAPEUTIC model (base + LoRA adapters)
+            # Check if we have LoRA adapters
             if self._has_lora_adapters():
-                logger.info("Loading therapeutic support model (fine-tuned with LoRA)...")
+                logger.info(f"Loading base model with LoRA adapters from {settings.model_path}...")
 
-                # Load base model again for therapeutic
-                therapeutic_base = AutoModelForCausalLM.from_pretrained(
+                # Load base model
+                base_model = AutoModelForCausalLM.from_pretrained(
                     settings.base_model_name,
                     **model_kwargs
                 )
 
                 # Apply LoRA adapters
-                self.therapeutic_model = PeftModel.from_pretrained(
-                    therapeutic_base,
+                self.model = PeftModel.from_pretrained(
+                    base_model,
                     settings.model_path,
                     torch_dtype=torch.float16 if self.device != "cpu" else torch.float32
                 )
 
                 if self.device == "cpu":
-                    self.therapeutic_model = self.therapeutic_model.to(self.device)
+                    self.model = self.model.to(self.device)
 
-                # Create therapeutic pipeline
-                self.therapeutic_pipeline = pipeline(
-                    "text-generation",
-                    model=self.therapeutic_model,
-                    tokenizer=self.tokenizer,
-                    torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
-                    device_map=settings.device_map if self.device != "cpu" else None,
-                )
-                logger.info("✓ Therapeutic model loaded")
+                logger.info("✓ Fine-tuned model with LoRA loaded")
             else:
-                logger.warning("No LoRA adapters found - using base model for both modes")
-                self.therapeutic_model = self.casual_model
-                self.therapeutic_pipeline = self.casual_pipeline
+                # Fallback to base model if no adapters found
+                logger.warning("No LoRA adapters found - loading base model only")
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    settings.base_model_name,
+                    **model_kwargs
+                )
+
+                if self.device == "cpu":
+                    self.model = self.model.to(self.device)
+
+                logger.info("✓ Base model loaded (no LoRA adapters)")
+
+            # Create pipeline
+            self.pipeline = pipeline(
+                "text-generation",
+                model=self.model,
+                tokenizer=self.tokenizer,
+                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
+                device_map=settings.device_map if self.device != "cpu" else None,
+            )
 
             self.load_time = time.time() - start_time
             self.models_loaded = True
@@ -149,17 +132,17 @@ class ModelService:
                 "memory_usage_mb": self._get_memory_usage(),
                 "quantization": quantization_config is not None,
                 "lora_enabled": self._has_lora_adapters(),
-                "dual_model_system": True,
+                "single_model_system": True,
                 "model_version": settings.model_version
             }
 
-            logger.info(f"Both models loaded successfully in {self.load_time:.2f} seconds")
+            logger.info(f"Model loaded successfully in {self.load_time:.2f} seconds")
             logger.info(f"Memory usage: {self.model_info['memory_usage_mb']} MB")
 
             return True
 
         except Exception as e:
-            logger.error(f"Failed to load models: {str(e)}")
+            logger.error(f"Failed to load model: {str(e)}")
             self.models_loaded = False
             self._clear_memory()
             return False
@@ -192,29 +175,16 @@ class ModelService:
         return int(process.memory_info().rss / 1024 / 1024)
 
     def get_pipeline(self, mode: str = "casual") -> Optional[Any]:
-        """Get the appropriate pipeline based on conversation mode."""
-        if mode == "casual":
-            return self.casual_pipeline
-        elif mode == "therapeutic":
-            return self.therapeutic_pipeline
-        elif mode == "crisis":
-            # Use base model for crisis - the fine-tuned model deflects from serious issues
-            logger.info("Using base model for crisis response (bypassing fine-tuned deflection)")
-            return self.casual_pipeline
-        else:
-            logger.warning(f"Unknown mode '{mode}', defaulting to casual")
-            return self.casual_pipeline
+        """Get the pipeline (single model system - mode parameter kept for compatibility)."""
+        # All modes use the same fine-tuned model now
+        return self.pipeline
 
     def _clear_memory(self):
         """Clear GPU and system memory."""
-        if self.casual_model is not None:
-            del self.casual_model
-        if self.therapeutic_model is not None:
-            del self.therapeutic_model
-        if self.casual_pipeline is not None:
-            del self.casual_pipeline
-        if self.therapeutic_pipeline is not None:
-            del self.therapeutic_pipeline
+        if self.model is not None:
+            del self.model
+        if self.pipeline is not None:
+            del self.pipeline
         if self.tokenizer is not None:
             del self.tokenizer
 
@@ -232,10 +202,8 @@ class ModelService:
         }
 
     def is_ready(self) -> bool:
-        """Check if models are loaded and ready for inference."""
-        return (self.models_loaded and
-                self.casual_pipeline is not None and
-                self.therapeutic_pipeline is not None)
+        """Check if model is loaded and ready for inference."""
+        return self.models_loaded and self.pipeline is not None
 
     async def cleanup(self):
         """Cleanup resources when shutting down."""

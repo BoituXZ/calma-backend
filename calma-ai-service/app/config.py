@@ -15,7 +15,9 @@ class Settings(BaseSettings):
     }
 
     # Model settings
-    model_path: str = "/home/boitu/Desktop/Coding/Calma/calma-backend/calma-ai/models/calma-final"
+    # Using relative path from calma-ai-service directory
+    # Updated to use tcabanski-trained model (best checkpoint)
+    model_path: str = "../models/calma-tcabanski-final/checkpoint-400"
     base_model_name: str = "meta-llama/Llama-3.2-3B-Instruct"
 
     # Inference settings

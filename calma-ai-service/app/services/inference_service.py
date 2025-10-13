@@ -181,19 +181,19 @@ Remember: You are a supportive companion, not a replacement for professional med
         max_tokens: int = None,
         **kwargs
     ) -> Dict[str, Any]:
-        """Generate AI response with cultural awareness and intelligent model routing."""
+        """Generate AI response with cultural awareness using the fine-tuned model."""
 
         if not model_service.is_ready():
-            raise RuntimeError("Models are not loaded and ready for inference")
+            raise RuntimeError("Model is not loaded and ready for inference")
 
         try:
             start_time = time.time()
 
-            # Determine which model to use
+            # Determine conversation mode for context (still used for prompt building)
             conversation_mode = self._determine_conversation_mode(context)
-            logger.info(f"Using {conversation_mode} model for this response")
+            logger.info(f"Using conversation mode: {conversation_mode}")
 
-            # Get the appropriate pipeline
+            # Get the pipeline (single model system)
             active_pipeline = model_service.get_pipeline(conversation_mode)
 
             # Use provided parameters or defaults

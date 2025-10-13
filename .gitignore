@@ -12,8 +12,16 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Temporary files and logs from startup scripts
+/tmp/calma-*.log
+/tmp/ai-service.log
+/tmp/calma-ai-service.log
+/tmp/calma-nestjs.log
+/tmp/calma-ai-startup.log
+
 # OS
 .DS_Store
+Thumbs.db
 
 # Tests
 /coverage
@@ -55,6 +63,127 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
+# Prisma generated files
 /generated/prisma
+src/database/prisma/generated/
 
-/generated/prisma
+# Python files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Python virtual environments
+calma-ai/calma/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# AI/ML specific
+# Model checkpoints and training artifacts (keep only final models)
+calma-ai/models/*/checkpoint-*/
+calma-ai/wandb/
+*.pt
+*.pth
+*.ckpt
+*.safetensors.bak
+*.bin.bak
+
+# Training data cache
+calma-ai/data/processed/
+calma-ai/data/cache/
+
+# FastAPI service cache
+calma-ai-service/__pycache__/
+calma-ai-service/**/__pycache__/
+calma-ai-service/.env
+
+# Keep template but ignore actual env files
+!calma-ai-service/.env.example
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# celery beat schedule file
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Editor backups
+*~
+*.swp
+*.swo
+*#
+.#*
+
+# System files
+*.DS_Store
+*.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Archive files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Temporary test files
+test-*.json
+test-*.log
+integration-test-*.json

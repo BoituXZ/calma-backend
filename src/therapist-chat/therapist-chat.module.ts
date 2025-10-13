@@ -4,6 +4,6 @@ import { TherapistChatController } from './therapist-chat.controller';
 
 @Module({
   providers: [TherapistChatService],
-  controllers: [TherapistChatController]
+  controllers: [TherapistChatController],
 })
 export class TherapistChatModule {}

@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+calma/
+venv/
+env/
+ENV/
+
+# Model training artifacts
+wandb/
+
+# Training checkpoints (keep only final models)
+models/*/checkpoint-*/
+
+# Data cache and processed files
+data/processed/
+data/cache/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Model backups
+*.safetensors.bak
+*.bin.bak
+*.pt.bak
+
+# Keep important files
+!models/calma-final/
+!data/raw/
+!configs/
+!src/
+!*.py
+!*.md
+!*.yaml
+!*.yml

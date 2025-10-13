@@ -1,0 +1,303 @@
+// Your existing models (keeping them unchanged)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  password       String
+  role           Role            @default(USER)
+  createdAt      DateTime        @default(now())
+  
+  // Existing relations
+  moods          Mood[]
+  chatbotChats   Chat[]
+  therapistChats TherapistChat[]
+  SavedResource  SavedResource[]
+  
+  // New memory system relations
+  culturalProfile CulturalProfile?
+  conversationSessions ConversationSession[]
+  userTopics     UserTopic[]
+  progressEntries ProgressTracking[]
+}
+
+enum Role {
+  USER
+  THERAPIST
+  ADMIN
+}
+
+// Enhanced Chat model with memory context
+model Chat {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  sender    Sender
+  message   String
+  timestamp DateTime @default(now())
+  
+  // New memory fields
+  session   ConversationSession @relation(fields: [sessionId], references: [id])
+  sessionId String
+  
+  // AI context and analysis
+  emotionalTone    String?     // "anxious", "hopeful", "frustrated"
+  detectedTopics   String[]    // ["family_conflict", "work_stress"]
+  culturalContext  Json?       // Store cultural adaptations made
+  memoryReferences String[]    // References to previous conversations
+  
+  @@index([userId, timestamp])
+  @@index([sessionId])
+}
+
+// Cultural Profile for each user
+model CulturalProfile {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+  
+  // Demographics
+  ageGroup        AgeGroup        @default(ADULT)
+  location        Location        @default(URBAN)
+  educationLevel  EducationLevel  @default(SECONDARY)
+  
+  // Cultural background
+  ethnicBackground String?        // "Shona", "Ndebele", "Other"
+  religiousBackground String?     // "Christian", "Traditional", "Other"
+  languagePreference String?      // "English", "Shona", "Ndebele"
+  
+  // Family structure
+  familyStructure FamilyType     @default(NUCLEAR)
+  householdSize   Int?
+  hasElders       Boolean        @default(false)
+  
+  // Communication preferences
+  communicationStyle String?     // "direct", "indirect", "formal"
+  respectLevel    RespectLevel   @default(MODERATE)
+  
+  // Economic context
+  economicStatus  EconomicLevel  @default(MIDDLE)
+  employmentStatus String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AgeGroup {
+  YOUTH      // 13-24
+  ADULT      // 25-54  
+  ELDER      // 55+
+}
+
+enum Location {
+  URBAN
+  RURAL
+  PERI_URBAN
+}
+
+enum EducationLevel {
+  PRIMARY
+  SECONDARY
+  TERTIARY
+  POSTGRADUATE
+}
+
+enum FamilyType {
+  NUCLEAR
+  EXTENDED
+  SINGLE_PARENT
+  GUARDIAN
+}
+
+enum RespectLevel {
+  HIGH       // Very traditional, formal communication
+  MODERATE   // Balanced approach
+  RELAXED    // More modern, casual
+}
+
+enum EconomicLevel {
+  LOW
+  MIDDLE
+  HIGH
+}
+
+// Conversation Sessions for memory grouping
+model ConversationSession {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  
+  title     String?  // AI-generated summary title
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  
+  // Session metadata
+  primaryTopic    String?      // Main issue discussed
+  emotionalState  String?      // Overall emotional tone
+  culturalFactors String[]     // Cultural considerations applied
+  
+  // Memory and context
+  keyInsights     Json?        // Important insights from session
+  actionItems     String[]     // Advice given
+  followUpNeeded  Boolean      @default(false)
+  
+  chats     Chat[]
+  topics    SessionTopic[]
+  
+  @@index([userId, startTime])
+}
+
+// Track topics discussed by user over time
+model UserTopic {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  
+  topic           String        // "family_conflict", "work_stress", etc.
+  firstDiscussed  DateTime      @default(now())
+  lastDiscussed   DateTime      @default(now())
+  frequency       Int           @default(1)
+  
+  // Progress tracking
+  severity        SeverityLevel @default(MODERATE)
+  status          TopicStatus   @default(ONGOING)
+  
+  sessions SessionTopic[]
+  
+  @@unique([userId, topic])
+  @@index([userId, lastDiscussed])
+}
+
+enum SeverityLevel {
+  LOW
+  MODERATE  
+  HIGH
+  CRITICAL
+}
+
+enum TopicStatus {
+  ONGOING
+  IMPROVING
+  RESOLVED
+  ESCALATED
+}
+
+// Link topics to specific sessions
+model SessionTopic {
+  id        String @id @default(uuid())
+  session   ConversationSession @relation(fields: [sessionId], references: [id])
+  sessionId String
+  topic     UserTopic @relation(fields: [topicId], references: [id])
+  topicId   String
+  
+  // Session-specific topic data
+  discussionDepth String?  // "brief", "detailed", "in-depth"
+  culturalAdaptation Json? // Cultural modifications made
+  adviceGiven     String[]
+  
+  @@unique([sessionId, topicId])
+}
+
+// Progress tracking over time
+model ProgressTracking {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  
+  date          DateTime @default(now())
+  overallMood   String?  // From mood tracking
+  
+  // Progress indicators
+  improvementAreas String[] // Topics showing improvement
+  concernAreas     String[] // Topics needing attention
+  
+  // Cultural adaptation learning
+  culturalLearnings Json?   // What the AI learned about user's culture
+  
+  // AI confidence and relationship
+  relationshipStrength Float @default(0.0) // 0-1 scale
+  trustLevel          Float @default(0.5)  // 0-1 scale
+  
+  @@index([userId, date])
+}
+
+// Enhanced existing models
+model Mood {
+  id     String   @id @default(uuid())
+  user   User     @relation(fields: [userId], references: [id])
+  userId String
+  mood   String
+  note   String?
+  date   DateTime @default(now())
+  
+  // Enhanced mood tracking
+  intensity    Int?     @default(5) // 1-10 scale
+  triggers     String[] // What caused this mood
+  culturalFactors String[] // Cultural influences on mood
+  
+  @@index([userId, date])
+}
+
+model TherapistChat {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  therapistId String
+  message     String
+  sender      Sender
+  timestamp   DateTime @default(now())
+  
+  // Link to AI memory for context sharing
+  relatedTopics String[] // Topics from AI sessions
+  aiContext     Json?    // Relevant AI conversation context
+}
+
+enum Sender {
+  USER
+  BOT
+  THERAPIST
+}
+
+model Resource {
+  id            String          @id @default(uuid())
+  title         String
+  description   String?
+  type          ResourceType
+  link          String
+  createdAt     DateTime        @default(now())
+  tags          String[]
+  SavedResource SavedResource[]
+  
+  // Cultural relevance
+  culturalTags  String[]        // "zimbabwean", "african", "shona"
+  targetAudience String[]       // "youth", "urban", "traditional"
+}
+
+enum ResourceType {
+  VIDEO
+  ARTICLE
+  TOOL
+  PODCAST
+  CULTURAL_STORY  // New type for cultural narratives/proverbs
+}
+
+model SavedResource {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+  resourceId String
+  savedAt    DateTime @default(now())
+  
+  // Why it was recommended
+  recommendationReason String?
+  culturalRelevance    String?
+}

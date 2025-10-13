@@ -1,0 +1,8 @@
+{
+  "train_size": 2533,
+  "validation_size": 317,
+  "test_size": 317,
+  "total_size": 3167,
+  "tokenizer": "meta-llama/Llama-3.2-3B-Instruct",
+  "max_length": 512
+}

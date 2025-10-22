@@ -26,6 +26,14 @@ export class AuthService {
       throw new BadRequestException('Email is already registered');
     }
 
+    // Security check: Prevent ADMIN role creation via signup
+    if (dto.role === 'ADMIN') {
+      throw new BadRequestException('Admin accounts cannot be created via signup');
+    }
+
+    // Default to USER role if not provided
+    const userRole = dto.role || 'USER';
+
     const hash = await bcrypt.hash(dto.password, 10);
 
     try {
@@ -34,11 +42,13 @@ export class AuthService {
           name: dto.name,
           email: dto.email,
           password: hash,
+          role: userRole,
         },
         select: {
           id: true,
           name: true,
           email: true,
+          role: true,
         },
       });
 
@@ -54,6 +64,7 @@ export class AuthService {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.role,
         },
       };
     } catch (error) {
@@ -72,6 +83,7 @@ export class AuthService {
           name: true,
           email: true,
           password: true,
+          role: true,
         },
       });
 
@@ -100,6 +112,7 @@ export class AuthService {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.role,
         },
       };
     } catch (error) {
@@ -127,6 +140,7 @@ export class AuthService {
           id: true,
           name: true,
           email: true,
+          role: true,
           // Don't select password for security
         },
       });

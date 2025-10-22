@@ -6,11 +6,17 @@ import { DatabaseService } from '../database/database.service';
 import { CulturalProfileModule } from '../cultural-profile/cultural-profile.module';
 import { ConversationSessionService } from '../conversation-session/conversation-session.service';
 import { AuthModule } from '../auth/auth.module';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @Module({
   imports: [HttpModule, CulturalProfileModule, AuthModule],
   controllers: [ChatController],
-  providers: [ChatService, DatabaseService, ConversationSessionService],
+  providers: [
+    ChatService,
+    DatabaseService,
+    ConversationSessionService,
+    JwtAuthGuard,
+  ],
   exports: [ChatService],
 })
 export class ChatModule {}

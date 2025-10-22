@@ -10,6 +10,7 @@ import { ResourcesModule } from './resources/resources.module';
 import { SavedResourceModule } from './saved-resource/saved-resource.module';
 import { DatabaseModule } from './database/database.module';
 import { CulturalProfileModule } from './cultural-profile/cultural-profile.module';
+import { AppointmentModule } from './appointment/appointment.module';
 import { ResourcesController } from './resources/resources.controller';
 import { ResourcesService } from './resources/resources.service';
 
@@ -24,6 +25,7 @@ import { ResourcesService } from './resources/resources.service';
     SavedResourceModule,
     DatabaseModule,
     CulturalProfileModule,
+    AppointmentModule,
   ],
   controllers: [AppController, ResourcesController],
   providers: [AppService, ResourcesService],

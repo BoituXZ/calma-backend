@@ -4,14 +4,19 @@ import {
   Post,
   Get,
   Req,
+  Query,
   HttpException,
   HttpStatus,
-  Logger
+  Logger,
+  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ChatService } from './chat.service';
 import { AuthService } from '../auth/auth.service';
 import { ChatRequestDto, ChatResponseDto } from '../common/dto/chat.dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/user.decorator';
+import { ConversationSessionService } from '../conversation-session/conversation-session.service';
 
 @Controller('chat')
 export class ChatController {
@@ -20,6 +25,7 @@ export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly authService: AuthService,
+    private readonly sessionService: ConversationSessionService,
   ) {}
 
   @Get('health')
@@ -84,13 +90,70 @@ export class ChatController {
 
       return result;
     } catch (error) {
-      this.logger.error(
-        `Failed to process message`,
-        error.stack,
-      );
+      this.logger.error(`Failed to process message`, error.stack);
 
       // Re-throw the error to let NestJS handle the HTTP response
       throw error;
+    }
+  }
+
+  @Get('history')
+  @UseGuards(JwtAuthGuard)
+  async getChatHistory(
+    @CurrentUser() user: any,
+    @Query('limit') limit?: string,
+    @Query('sessionId') sessionId?: string,
+  ) {
+    try {
+      const limitNum = limit ? parseInt(limit, 10) : 50;
+
+      if (sessionId) {
+        // Get chats for specific session
+        const session =
+          await this.sessionService.getSessionWithChats(sessionId);
+
+        if (!session || session.userId !== user.id) {
+          throw new HttpException(
+            'Session not found or access denied',
+            HttpStatus.FORBIDDEN,
+          );
+        }
+
+        return {
+          session: {
+            id: session.id,
+            title: session.title,
+            startTime: session.startTime,
+            endTime: session.endTime,
+          },
+          chats: session.chats,
+        };
+      } else {
+        // Get recent chats across all sessions
+        const chats = await this.sessionService.getRecentChats(
+          user.id,
+          limitNum,
+        );
+        return { chats };
+      }
+    } catch (error) {
+      this.logger.error('Failed to get chat history', error.stack);
+      throw error;
+    }
+  }
+
+  @Get('sessions')
+  @UseGuards(JwtAuthGuard)
+  async getSessions(@CurrentUser() user: any) {
+    try {
+      const sessions = await this.chatService.getUserSessions(user.id);
+      return { sessions };
+    } catch (error) {
+      this.logger.error('Failed to get sessions', error.stack);
+      throw new HttpException(
+        'Failed to retrieve sessions',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

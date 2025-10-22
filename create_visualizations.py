@@ -289,13 +289,13 @@ for result in test_results['test_results']:
 
 # Calculate averages
 cat_summary = []
-for cat, metrics in category_metrics.items():
+for cat, cat_metrics in category_metrics.items():
     cat_summary.append({
         'Category': cat,
-        'Overall Quality': np.mean(metrics['overall_quality']),
-        'Empathy': np.mean(metrics['empathy']),
-        'Relevance': np.mean(metrics['relevance']),
-        'Avg Response Time': np.mean(metrics['response_time'])
+        'Overall Quality': np.mean(cat_metrics['overall_quality']),
+        'Empathy': np.mean(cat_metrics['empathy']),
+        'Relevance': np.mean(cat_metrics['relevance']),
+        'Avg Response Time': np.mean(cat_metrics['response_time'])
     })
 
 cat_df = pd.DataFrame(cat_summary)
@@ -447,10 +447,10 @@ QUALITY METRICS (AVERAGE)
 ────────────────────────────────────────────────
 • Empathy Score: {quality_df['Empathy'].mean():.1f}/100
 • Relevance Score: {quality_df['Relevance'].mean():.1f}/100
-• Cultural Awareness: {quality_df['Cultural\\nAwareness'].mean():.1f}/100
+• Cultural Awareness: {quality_df['Cultural\nAwareness'].mean():.1f}/100
 • Safety Score: {quality_df['Safety'].mean():.1f}/100
 • Actionability Score: {quality_df['Actionability'].mean():.1f}/100
-• Overall Quality: {quality_df['Overall\\nQuality'].mean():.1f}/100
+• Overall Quality: {quality_df['Overall\nQuality'].mean():.1f}/100
 
 """
 
@@ -510,10 +510,10 @@ The Calma mental health chatbot model was successfully trained for {trainer_stat
 |--------|------|--------|---------|
 | Empathy | {quality_df['Empathy'].mean():.2f} | {quality_df['Empathy'].median():.2f} | {quality_df['Empathy'].std():.2f} |
 | Relevance | {quality_df['Relevance'].mean():.2f} | {quality_df['Relevance'].median():.2f} | {quality_df['Relevance'].std():.2f} |
-| Cultural Awareness | {quality_df['Cultural\\nAwareness'].mean():.2f} | {quality_df['Cultural\\nAwareness'].median():.2f} | {quality_df['Cultural\\nAwareness'].std():.2f} |
+| Cultural Awareness | {quality_df['Cultural\nAwareness'].mean():.2f} | {quality_df['Cultural\nAwareness'].median():.2f} | {quality_df['Cultural\nAwareness'].std():.2f} |
 | Safety | {quality_df['Safety'].mean():.2f} | {quality_df['Safety'].median():.2f} | {quality_df['Safety'].std():.2f} |
 | Actionability | {quality_df['Actionability'].mean():.2f} | {quality_df['Actionability'].median():.2f} | {quality_df['Actionability'].std():.2f} |
-| **Overall Quality** | **{quality_df['Overall\\nQuality'].mean():.2f}** | **{quality_df['Overall\\nQuality'].median():.2f}** | **{quality_df['Overall\\nQuality'].std():.2f}** |
+| **Overall Quality** | **{quality_df['Overall\nQuality'].mean():.2f}** | **{quality_df['Overall\nQuality'].median():.2f}** | **{quality_df['Overall\nQuality'].std():.2f}** |
 
 ## Visualizations Generated
 

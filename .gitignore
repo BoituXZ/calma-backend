@@ -117,6 +117,9 @@ calma-ai/wandb/
 calma-ai/data/processed/
 calma-ai/data/cache/
 
+# Generated visualizations
+model_visualizations/
+
 # FastAPI service cache
 calma-ai-service/__pycache__/
 calma-ai-service/**/__pycache__/

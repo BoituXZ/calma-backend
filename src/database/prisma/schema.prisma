@@ -15,13 +15,14 @@ model User {
   password       String
   role           Role            @default(USER)
   createdAt      DateTime        @default(now())
-  
+
   // Existing relations
   moods          Mood[]
   chatbotChats   Chat[]
   therapistChats TherapistChat[]
   SavedResource  SavedResource[]
-  
+  appointments   Appointment[]
+
   // New memory system relations
   culturalProfile CulturalProfile?
   conversationSessions ConversationSession[]
@@ -296,8 +297,42 @@ model SavedResource {
   resource   Resource @relation(fields: [resourceId], references: [id])
   resourceId String
   savedAt    DateTime @default(now())
-  
+
   // Why it was recommended
   recommendationReason String?
   culturalRelevance    String?
+}
+
+// Appointments model for scheduling therapist sessions
+model Appointment {
+  id          String            @id @default(uuid())
+  user        User              @relation(fields: [userId], references: [id])
+  userId      String
+  therapistId String
+
+  scheduledAt DateTime
+  duration    Int               @default(60) // in minutes
+  status      AppointmentStatus @default(SCHEDULED)
+
+  // Appointment details
+  reason      String?
+  notes       String?
+
+  // Meeting info
+  meetingLink String?
+  location    String?
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId, scheduledAt])
+  @@index([therapistId, scheduledAt])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
 }

@@ -63,7 +63,9 @@ export class ChatService {
 
       // Count messages in this session to determine conversation stage
       const sessionMessageCount = conversationMemory.recentMessages
-        ? conversationMemory.recentMessages.filter(msg => msg.sender === 'USER').length
+        ? conversationMemory.recentMessages.filter(
+            (msg) => msg.sender === 'USER',
+          ).length
         : 0;
 
       // Save user message first
@@ -111,7 +113,11 @@ export class ChatService {
       // Call FastAPI AI inference service with stage-aware context
       const fastApiRequest = {
         message,
-        context: this.buildContextString(conversationMemory, message, sessionMessageCount),
+        context: this.buildContextString(
+          conversationMemory,
+          message,
+          sessionMessageCount,
+        ),
         parameters: {
           temperature,
           max_tokens: maxTokens,
@@ -119,16 +125,12 @@ export class ChatService {
       };
 
       const response = await firstValueFrom(
-        this.httpService.post(
-          'http://localhost:8000/infer',
-          fastApiRequest,
-          {
-            timeout: 30000, // 30 second timeout
-            headers: {
-              'Content-Type': 'application/json',
-            },
+        this.httpService.post('http://localhost:8000/infer', fastApiRequest, {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ),
+        }),
       );
 
       const aiResponse = response.data;
@@ -159,7 +161,10 @@ export class ChatService {
         sessionUpdates.emotionalState = aiResponse.metadata.mood_detected;
       }
 
-      if (aiResponse.suggested_resources && aiResponse.suggested_resources.length > 0) {
+      if (
+        aiResponse.suggested_resources &&
+        aiResponse.suggested_resources.length > 0
+      ) {
         sessionUpdates.primaryTopic = aiResponse.suggested_resources[0]; // Use first suggested resource as primary topic
         sessionUpdates.actionItems = aiResponse.suggested_resources;
       }
@@ -310,31 +315,45 @@ export class ChatService {
   /**
    * Get temperature setting based on message type
    */
-  private getTemperatureForMessageType(messageType: 'greeting' | 'follow_up' | 'new_topic' | 'light_chat'): number {
+  private getTemperatureForMessageType(
+    messageType: 'greeting' | 'follow_up' | 'new_topic' | 'light_chat',
+  ): number {
     switch (messageType) {
-      case 'greeting': return 0.7; // More consistent, friendly responses
-      case 'light_chat': return 0.75; // Conversational but not too creative
-      case 'follow_up': return 0.85; // More creative when user is engaged
-      case 'new_topic': return 0.8; // Default balanced creativity
+      case 'greeting':
+        return 0.7; // More consistent, friendly responses
+      case 'light_chat':
+        return 0.75; // Conversational but not too creative
+      case 'follow_up':
+        return 0.85; // More creative when user is engaged
+      case 'new_topic':
+        return 0.8; // Default balanced creativity
     }
   }
 
   /**
    * Get max tokens based on message type
    */
-  private getMaxTokensForMessageType(messageType: 'greeting' | 'follow_up' | 'new_topic' | 'light_chat'): number {
+  private getMaxTokensForMessageType(
+    messageType: 'greeting' | 'follow_up' | 'new_topic' | 'light_chat',
+  ): number {
     switch (messageType) {
-      case 'greeting': return 100; // Short, friendly greetings
-      case 'light_chat': return 150; // Brief conversational responses
-      case 'follow_up': return 250; // More detailed when user wants depth
-      case 'new_topic': return 200; // Standard response length
+      case 'greeting':
+        return 100; // Short, friendly greetings
+      case 'light_chat':
+        return 150; // Brief conversational responses
+      case 'follow_up':
+        return 250; // More detailed when user wants depth
+      case 'new_topic':
+        return 200; // Standard response length
     }
   }
 
   /**
    * Detect if user is in distress and needs therapeutic support
    */
-  private detectDistress(message: string): 'none' | 'mild' | 'moderate' | 'severe' {
+  private detectDistress(
+    message: string,
+  ): 'none' | 'mild' | 'moderate' | 'severe' {
     const normalizedMsg = message.toLowerCase();
 
     // Severe distress indicators - immediate therapeutic mode
@@ -343,7 +362,7 @@ export class ChatService {
       /\b(can't take|cannot take|can't cope|cannot cope) (it|this|anymore)\b/i,
       /\b(severe|extreme|unbearable) (pain|depression|anxiety)\b/i,
     ];
-    if (severeIndicators.some(pattern => pattern.test(message))) {
+    if (severeIndicators.some((pattern) => pattern.test(message))) {
       return 'severe';
     }
 
@@ -354,7 +373,7 @@ export class ChatService {
       /\b(panic attack|mental breakdown|crisis)\b/i,
       /\b(really (sad|down|low|bad)|very (depressed|anxious|worried))\b/i,
     ];
-    if (moderateIndicators.some(pattern => pattern.test(message))) {
+    if (moderateIndicators.some((pattern) => pattern.test(message))) {
       return 'moderate';
     }
 
@@ -367,7 +386,10 @@ export class ChatService {
     ];
 
     // Only count as mild if message is substantive (not just "I'm bored")
-    if (message.split(' ').length > 5 && mildIndicators.some(pattern => pattern.test(message))) {
+    if (
+      message.split(' ').length > 5 &&
+      mildIndicators.some((pattern) => pattern.test(message))
+    ) {
       return 'mild';
     }
 
@@ -377,7 +399,9 @@ export class ChatService {
   /**
    * Classify message type to determine context needs
    */
-  private classifyMessage(message: string): 'greeting' | 'follow_up' | 'new_topic' | 'light_chat' {
+  private classifyMessage(
+    message: string,
+  ): 'greeting' | 'follow_up' | 'new_topic' | 'light_chat' {
     const normalizedMsg = message.trim().toLowerCase();
 
     // Simple greetings
@@ -385,7 +409,7 @@ export class ChatService {
       /^(hi|hey|hello|hii+|heyy+|yo|sup|wassup|howdy)[\s!?.]*$/i,
       /^(good\s+(morning|afternoon|evening|night))[\s!?.]*$/i,
     ];
-    if (greetingPatterns.some(pattern => pattern.test(normalizedMsg))) {
+    if (greetingPatterns.some((pattern) => pattern.test(normalizedMsg))) {
       return 'greeting';
     }
 
@@ -396,7 +420,10 @@ export class ChatService {
       /^(yeah|yep|yes|okay|ok|sure|alright|cool|nice|thanks|thank you)[\s!?.]*$/i,
       /^(lol|haha|hehe)[\s!?.]*$/i,
     ];
-    if (lightChatPatterns.some(pattern => pattern.test(normalizedMsg)) || message.length < 20) {
+    if (
+      lightChatPatterns.some((pattern) => pattern.test(normalizedMsg)) ||
+      message.length < 20
+    ) {
       return 'light_chat';
     }
 
@@ -406,7 +433,7 @@ export class ChatService {
       /\b(still|also|too|as well|and)\b/i,
       /\b(continue|more about|tell me more)\b/i,
     ];
-    if (followUpIndicators.some(pattern => pattern.test(message))) {
+    if (followUpIndicators.some((pattern) => pattern.test(message))) {
       return 'follow_up';
     }
 
@@ -420,114 +447,172 @@ export class ChatService {
   private buildContextString(
     conversationMemory: ConversationMemory,
     currentMessage: string,
-    sessionMessageCount: number
+    sessionMessageCount: number,
   ): string {
     const messageType = this.classifyMessage(currentMessage);
     const distressLevel = this.detectDistress(currentMessage);
     const contextParts: string[] = [];
 
     // Add conversation stage indicator
-    const conversationStage = sessionMessageCount <= 8 ? 'early' : 'established';
-    contextParts.push(`[Conversation stage: ${conversationStage}, Message #${sessionMessageCount + 1}]`);
+    const conversationStage =
+      sessionMessageCount <= 8 ? 'early' : 'established';
+    contextParts.push(
+      `[Conversation stage: ${conversationStage}, Message #${sessionMessageCount + 1}]`,
+    );
 
     // FORCE casual mode for early conversation unless severe distress
-    if (conversationStage === 'early' && distressLevel !== 'severe' && distressLevel !== 'moderate') {
+    if (
+      conversationStage === 'early' &&
+      distressLevel !== 'severe' &&
+      distressLevel !== 'moderate'
+    ) {
       // Early conversation - stay casual even if mild distress detected
-      if (conversationMemory.recentMessages && conversationMemory.recentMessages.length > 0) {
+      if (
+        conversationMemory.recentMessages &&
+        conversationMemory.recentMessages.length > 0
+      ) {
         const recentContext = conversationMemory.recentMessages
           .slice(-2)
-          .map(msg => `${msg.sender}: ${msg.message}`)
+          .map((msg) => `${msg.sender}: ${msg.message}`)
           .join('\n');
         contextParts.push(`Recent exchange:\n${recentContext}`);
       }
-      contextParts.push(`[INSTRUCTION: This is early conversation. Stay casual and friendly. Build rapport naturally. Do NOT assume user needs therapy unless they explicitly ask for help.]`);
+      contextParts.push(
+        `[INSTRUCTION: This is early conversation. Stay casual and friendly. Build rapport naturally. Do NOT assume user needs therapy unless they explicitly ask for help.]`,
+      );
       return contextParts.join('\n\n');
     }
 
     // OVERRIDE for explicit distress - go therapeutic immediately
     if (distressLevel === 'severe' || distressLevel === 'moderate') {
       // Full therapeutic context
-      if (conversationMemory.recentMessages && conversationMemory.recentMessages.length > 0) {
+      if (
+        conversationMemory.recentMessages &&
+        conversationMemory.recentMessages.length > 0
+      ) {
         const recentContext = conversationMemory.recentMessages
           .slice(-4)
-          .map(msg => `${msg.sender}: ${msg.message}`)
+          .map((msg) => `${msg.sender}: ${msg.message}`)
           .join('\n');
         contextParts.push(`Recent conversation:\n${recentContext}`);
       }
 
-      if (conversationMemory.userTopics && conversationMemory.userTopics.length > 0) {
+      if (
+        conversationMemory.userTopics &&
+        conversationMemory.userTopics.length > 0
+      ) {
         const relevantTopics = conversationMemory.userTopics.slice(0, 3);
-        const topicContext = relevantTopics.map(topic => `${topic.topic} (${topic.severity})`).join(', ');
+        const topicContext = relevantTopics
+          .map((topic) => `${topic.topic} (${topic.severity})`)
+          .join(', ');
         contextParts.push(`User's ongoing topics: ${topicContext}`);
       }
 
-      contextParts.push(`[INSTRUCTION: User is expressing ${distressLevel} distress. Provide appropriate therapeutic support.]`);
+      contextParts.push(
+        `[INSTRUCTION: User is expressing ${distressLevel} distress. Provide appropriate therapeutic support.]`,
+      );
       return contextParts.join('\n\n');
     }
 
     // Default handling based on message type (for established conversations or mild distress)
     switch (messageType) {
       case 'greeting':
-        if (conversationMemory.recentMessages && conversationMemory.recentMessages.length > 0) {
-          const lastMessage = conversationMemory.recentMessages[conversationMemory.recentMessages.length - 1];
+        if (
+          conversationMemory.recentMessages &&
+          conversationMemory.recentMessages.length > 0
+        ) {
+          const lastMessage =
+            conversationMemory.recentMessages[
+              conversationMemory.recentMessages.length - 1
+            ];
           if (lastMessage) {
-            contextParts.push(`Last interaction: ${lastMessage.sender}: "${lastMessage.message.slice(0, 50)}${lastMessage.message.length > 50 ? '...' : ''}"`);
+            contextParts.push(
+              `Last interaction: ${lastMessage.sender}: "${lastMessage.message.slice(0, 50)}${lastMessage.message.length > 50 ? '...' : ''}"`,
+            );
           }
         }
         break;
 
       case 'light_chat':
-        if (conversationMemory.recentMessages && conversationMemory.recentMessages.length > 0) {
+        if (
+          conversationMemory.recentMessages &&
+          conversationMemory.recentMessages.length > 0
+        ) {
           const recentContext = conversationMemory.recentMessages
             .slice(-2)
-            .map(msg => `${msg.sender}: ${msg.message}`)
+            .map((msg) => `${msg.sender}: ${msg.message}`)
             .join('\n');
           contextParts.push(`Recent exchange:\n${recentContext}`);
         }
         break;
 
       case 'follow_up':
-        if (conversationMemory.recentMessages && conversationMemory.recentMessages.length > 0) {
+        if (
+          conversationMemory.recentMessages &&
+          conversationMemory.recentMessages.length > 0
+        ) {
           const recentContext = conversationMemory.recentMessages
             .slice(-4)
-            .map(msg => `${msg.sender}: ${msg.message}`)
+            .map((msg) => `${msg.sender}: ${msg.message}`)
             .join('\n');
           contextParts.push(`Recent conversation:\n${recentContext}`);
         }
 
-        if (conversationMemory.userTopics && conversationMemory.userTopics.length > 0) {
+        if (
+          conversationMemory.userTopics &&
+          conversationMemory.userTopics.length > 0
+        ) {
           const recentTopics = conversationMemory.userTopics
-            .filter(topic => {
-              const daysSinceDiscussed = (new Date().getTime() - new Date(topic.lastDiscussed).getTime()) / (1000 * 60 * 60 * 24);
+            .filter((topic) => {
+              const daysSinceDiscussed =
+                (new Date().getTime() -
+                  new Date(topic.lastDiscussed).getTime()) /
+                (1000 * 60 * 60 * 24);
               return daysSinceDiscussed < 7;
             })
             .slice(0, 2);
 
           if (recentTopics.length > 0) {
-            const topicContext = recentTopics.map(topic => `${topic.topic}`).join(', ');
+            const topicContext = recentTopics
+              .map((topic) => `${topic.topic}`)
+              .join(', ');
             contextParts.push(`Recent discussion topics: ${topicContext}`);
           }
         }
         break;
 
       case 'new_topic':
-        if (conversationMemory.recentMessages && conversationMemory.recentMessages.length > 0) {
+        if (
+          conversationMemory.recentMessages &&
+          conversationMemory.recentMessages.length > 0
+        ) {
           const recentContext = conversationMemory.recentMessages
             .slice(-3)
-            .map(msg => `${msg.sender}: ${msg.message}`)
+            .map((msg) => `${msg.sender}: ${msg.message}`)
             .join('\n');
           contextParts.push(`Recent conversation:\n${recentContext}`);
         }
 
         // Only add background topics if conversation is established
-        if (conversationStage === 'established' && conversationMemory.userTopics && conversationMemory.userTopics.length > 0) {
+        if (
+          conversationStage === 'established' &&
+          conversationMemory.userTopics &&
+          conversationMemory.userTopics.length > 0
+        ) {
           const activeTopics = conversationMemory.userTopics
-            .filter(topic => topic.status === 'ONGOING' && topic.severity !== 'MILD')
+            .filter(
+              (topic) =>
+                topic.status === 'ONGOING' && topic.severity !== 'MILD',
+            )
             .slice(0, 2);
 
           if (activeTopics.length > 0) {
-            const topicContext = activeTopics.map(topic => topic.topic).join(', ');
-            contextParts.push(`Background awareness: User has discussed ${topicContext} (reference only if relevant)`);
+            const topicContext = activeTopics
+              .map((topic) => topic.topic)
+              .join(', ');
+            contextParts.push(
+              `Background awareness: User has discussed ${topicContext} (reference only if relevant)`,
+            );
           }
         }
         break;
@@ -540,7 +625,8 @@ export class ChatService {
     // Calculate relationship strength based on response quality and cultural awareness
     const baseStrength = 0.5;
     const qualityBonus = (aiResponse.quality_metrics?.empathy_score || 0) * 0.3;
-    const culturalBonus = (aiResponse.quality_metrics?.cultural_awareness_score || 0) * 0.2;
+    const culturalBonus =
+      (aiResponse.quality_metrics?.cultural_awareness_score || 0) * 0.2;
 
     return Math.min(baseStrength + qualityBonus + culturalBonus, 1.0);
   }
@@ -549,7 +635,10 @@ export class ChatService {
     const improvements: string[] = [];
 
     // If mood is positive or neutral, consider suggested resources as improvement areas
-    if (aiResponse.metadata?.mood_detected === 'positive' || aiResponse.metadata?.mood_detected === 'neutral') {
+    if (
+      aiResponse.metadata?.mood_detected === 'positive' ||
+      aiResponse.metadata?.mood_detected === 'neutral'
+    ) {
       improvements.push(...(aiResponse.suggested_resources || []));
     }
 
@@ -560,18 +649,17 @@ export class ChatService {
     const concerns: string[] = [];
 
     // If mood is negative with high intensity, mark suggested resources as concerns
-    if (aiResponse.metadata?.mood_detected === 'negative' &&
-        (aiResponse.metadata?.emotional_intensity || 0) >= 7) {
+    if (
+      aiResponse.metadata?.mood_detected === 'negative' &&
+      (aiResponse.metadata?.emotional_intensity || 0) >= 7
+    ) {
       concerns.push(...(aiResponse.suggested_resources || []));
     }
 
     return concerns;
   }
 
-  private async updateUserTopics(
-    userId: string,
-    detectedTopics: string[],
-  ) {
+  private async updateUserTopics(userId: string, detectedTopics: string[]) {
     for (const topic of detectedTopics) {
       await this.prisma.userTopic.upsert({
         where: {
@@ -610,5 +698,26 @@ export class ChatService {
         concernAreas: progressUpdates.concernAreas || [],
       },
     });
+  }
+
+  async getUserSessions(userId: string) {
+    const sessions = await this.prisma.conversationSession.findMany({
+      where: { userId },
+      orderBy: { startTime: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        startTime: true,
+        endTime: true,
+        primaryTopic: true,
+        emotionalState: true,
+        followUpNeeded: true,
+        _count: {
+          select: { chats: true },
+        },
+      },
+    });
+
+    return sessions;
   }
 }

@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Body,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
 import { CulturalProfileService } from './cultural-profile.service';
 import {
   CreateCulturalProfileDto,
